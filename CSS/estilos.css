@@ -1,0 +1,22 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+header{
+    color: pink;
+    background-color: plum;
+    text-align: center;
+}
+#productos{
+    background-color: pink;
+    color: plum;
+    text-transform: uppercase;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+.carro{
+    background-color: plum;
+    color: pink;
+}
