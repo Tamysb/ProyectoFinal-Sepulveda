@@ -19,4 +19,11 @@ header{
 .carro{
     background-color: plum;
     color: pink;
+    text-align: center;
+}
+#elementos-carrito{
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
 }
