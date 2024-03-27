@@ -1,111 +1,168 @@
-// Productos
+const url = 'https://free-to-play-games-database.p.rapidapi.com/api/games';
+const options = {
+	method: 'GET',
+	headers: {
+		'X-RapidAPI-Key': 'e151bfcce1msh62dc157c9493e5ep187439jsn3e19e5f5912f',
+		'X-RapidAPI-Host': 'free-to-play-games-database.p.rapidapi.com'
+	}
+};
 
-class Producto{
-    constructor(id,nombre, cantidad, precio){
-    this.id=id
-    this.nombre = nombre
-    this.cantidad = cantidad
-    this.precio = precio
-    
-}   
-    IVA(){
-        this.IVA = this.precio*1.9
-    }
-    DESC(){
-        if(this.IVA >= 9000){
-            this.DESC = (this.IVA-(this.IVA * 0.20))
-        }
-        else{
-            this.DESC = 0
-        }
-    }
-}
-const productos=[
-    new Producto(1,"producto1", 1, 5000),
-    new Producto(2,"producto2", 1, 6000),
-    new Producto(3,"producto3", 1, 10000),
-    new Producto(4,"producto4", 1, 2000),
-    new Producto(5,"producto5",1,3000)
-]
-for(const producto of productos){
-    console.log(producto.IVA())
-    console.log(producto.DESC())
-}
-// Carro de Compras
-const contenedorProductos = document.getElementById('productos');
-const contenedorElementosCarrito = document.getElementById('elementos-carrito');
-const totalSpan = document.getElementById('total');
+//OBTENER ELEMENTOS 
+function obtenerElementosCarritoDesdeLocalStorage (){
+    const elementosCarritoGuardados = localStorage.getItem('elementosCarrito');
+    return elementosCarritoGuardados ? JSON.parse(elementosCarritoGuardados) : [];
+ }
+// GUARDAR ELEMNENTOS
 
-function renderizarProductos(){
-    productos.forEach(producto =>{
-        const div = document.createElement('div');
-        div.classList.add('producto');
-        div.innerHTML = `
-        <h3>${producto.nombre}</h3>
-        <p>precio:$${producto.precio}</p>
-        <p>precio:$${producto.IVA}(iva incluido)</p>
-        <button class="btn-agregar-carrito" data-id="${producto.id}">comprar</button> 
-        `;
-        contenedorProductos.appendChild(div);
-        
+function guardarElementosCarritoEnLocalStorage(){
+   localStorage.setItem('elementosCarrito', JSON.stringify(elementosCarrito))
+}
+// OBTENER JUEGOS
+async function obtenerJuegos(){
+   try {
+	const response = await fetch(url, options);
+	const result = await response.json();
+    const primerosDiezJuegos = result.slice(0,10)
+    console.log(result)
+    primerosDiezJuegos.forEach(juego =>{
+        switch(juego.id){
+            case 540:
+                juego.precio = 10000;
+                break;
+
+            case 521:
+                juego.precio = 5000;
+                break;
+           
+            case 517:
+                juego.precio = 4500;
+                break;
+               
+            case 516:
+                juego.precio = 6200;
+                break;
+            case  508:
+                juego.precio = 7600;
+                break;
+            case  345:
+                juego.precio = 8000;
+                break;
+            case 516:
+                juego.precio = 6000;
+                break;
+            case  475:
+                juego.precio = 3700;
+                break;
+            case  523:
+                juego.precio = 2800;
+                break;
+            case  340:
+                juego.precio = 1800;
+                break;
+            
+            default:
+                juego.precio = 0;
+                break;
+        }
     })
+    return primerosDiezJuegos
+   } 
+   catch (error) {
+    console.error(error);
+   } 
 }
+obtenerJuegos()
+// CONTENEDOR JUEGOS
+async function renderizarJuegos(){
+    const contenedorJuegos = document.getElementById('contenedorJuegos');
+    const datosJuegos = await obtenerJuegos();
 
-//agregar al carrito el producto
+    datosJuegos.forEach(juego => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'tarjeta';
 
-function agregarAlCarrito(idProducto){
-    const elementosCarrito = JSON.parse(localStorage.getItem('carro'))||[];
-    const itemExistente = elementosCarrito.find(item => item.id === idProducto);
+         const titulo = document.createElement('h2');
+         titulo.textContent = juego.title;
+
+         const imagen = document.createElement('img');
+         imagen.src = juego.thumbnail
+
+         const descripcion = document.createElement('p');
+         descripcion.textContent = juego.short_description;
+         const precio = document.createElement('p');
+         precio.textContent = `precio: $${juego.precio || 'gratis'}`;
+
+         const botonComprar = document.createElement('button');
+         botonComprar.textContent = 'comprar';
+         botonComprar.addEventListener('click', () => agregarAlCarrito(juego))
     
-    if(itemExistente){
+        tarjeta.appendChild(titulo)
+        tarjeta.appendChild(imagen)
+        tarjeta.appendChild(descripcion)
+        tarjeta.appendChild(precio)
+        tarjeta.appendChild(botonComprar)
         
-        itemExistente.cantidad++
+        contenedorJuegos.appendChild(tarjeta);
+    
+        });
         
-    }else{
-        const producto = productos.find(p => p.id === idProducto);
-        if(producto){
-            elementosCarrito.push({...producto, cantidad:1});
+}renderizarJuegos()
 
-        }
+const elementosCarrito = obtenerElementosCarritoDesdeLocalStorage();
+// AGREGAR ELEMENTOS AL CARRITO
+function agregarAlCarrito(juego){
+    const indice=elementosCarrito.findIndex(item=>item.id===juego.id)
+    if (indice===-1){
+        elementosCarrito.push({...juego, cantidad:1})
     }
-    localStorage.setItem('carro', JSON.stringify(elementosCarrito))
+    else{
+        elementosCarrito[indice].cantidad++
+            
+    }
+        
+    Toastify({
+        position: "right",
+        text: `${juego.title}$${juego.precio*1.9}`,
+        close: true,
+            
+    }).showToast()
+    guardarElementosCarritoEnLocalStorage();
     renderizarCarrito();
 }
-
-//eliminar el producto
-
-function eliminarDelCarrito(idProducto){
-    const elementosCarrito = JSON.parse(localStorage.getItem('carro'))||[];
-    const indice = elementosCarrito.findIndex(item => item.id === idProducto);
-    if(indice !== -1){
-        elementosCarrito.splice(indice, 1);
+// ELIMINAR ELEMENTOS DEL CARRITO
+function eliminarDelCarrito(idjuego){
+    const indice = elementosCarrito.findIndex((item)=>item.id===idjuego);
+    
+    if(indice!==-1){
+        elementosCarrito.splice(indice,1)
     }
-    localStorage.setItem('carro', JSON.stringify(elementosCarrito))
-    renderizarCarrito()
+    guardarElementosCarritoEnLocalStorage();
+    renderizarCarrito();
+    
 }
-
-function renderizarCarrito() {
-    const elementosCarrito = JSON.parse(localStorage.getItem('carro'))||[];
-    contenedorElementosCarrito.innerHTML = '';
+// CARRITO
+const listaCarrito = document.getElementById('listaCarrito');
+const totalSpan = document.getElementById('total');
+function renderizarCarrito(){
+    listaCarrito.innerHTML = '';
     let precioTotal = 0;
     elementosCarrito.forEach(item =>{
-            const li = document.createElement('li');
-            li.textContent = `${item.nombre} x ${item.cantidad}  - $${item.precio * item.cantidad}-$${(item.IVA)*item.cantidad}-$${(item.DESC)*item.cantidad}`
-            const btnEliminar = document.createElement('button');
-            btnEliminar.textContent = 'eliminar';
-            btnEliminar.addEventListener('click', () => eliminarDelCarrito(item.id))
-            li.appendChild(btnEliminar);
-            contenedorElementosCarrito.appendChild(li);
-            precioTotal += (item.precio * 1.9) * item.cantidad
+        
+        const elementoLista = document.createElement('li');
+        elementoLista.textContent= `${item.title}(x${item.cantidad})precio iva:$${(item.precio *1.9 )*item.cantidad}`;        
+        const btnEliminar = document.createElement('button');
+        btnEliminar.textContent = 'eliminar';
+        btnEliminar.addEventListener('click', () => eliminarDelCarrito(item.id))
+        elementoLista.appendChild(btnEliminar);
+        listaCarrito.appendChild(elementoLista);
+        precioTotal += (item.precio * 1.9) * item.cantidad
     })
-    totalSpan.textContent = precioTotal;
-    localStorage.setItem('carro', JSON.stringify(elementosCarrito))
+    totalSpan.textContent = precioTotal.toFixed(2)
 }
 
 function realizarCompra(){
-    const elementosCarrito = JSON.parse(localStorage.getItem('carro'))||[];
     Swal.fire({
-        position: "top-end",
+        position: "center",
         icon: "success",
         title: "compra exitosa",
         text: `$${totalSpan.textContent}`,
@@ -113,28 +170,10 @@ function realizarCompra(){
         
       })
     elementosCarrito.length = 0;
-    localStorage.setItem('carro', JSON.stringify(elementosCarrito))
+    guardarElementosCarritoEnLocalStorage()
     renderizarCarrito();
 }
-
 document.getElementById('btn-comprar').addEventListener('click',realizarCompra);
 
-contenedorProductos.addEventListener('click',function(evento){
-    if(evento.target.classList.contains('btn-agregar-carrito')){
-            const idProducto = parseInt(evento.target.getAttribute('data-id'));
-            agregarAlCarrito(idProducto);
-        }
-        Toastify({
-            position: "right",
-            text: `$${totalSpan.textContent}`,
-            close: true,
-            
-          }).showToast()
-    
-});
 
-
-window.addEventListener('load',()=> {
-    renderizarProductos(),
-    renderizarCarrito()
-})
+renderizarCarrito()
